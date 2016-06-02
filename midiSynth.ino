@@ -1,7 +1,7 @@
 /*
 
  */
-#include "periodes.h"
+#include <math.h>
 
 //save last ouput toggle
 unsigned long previousMicros = 0;
@@ -80,7 +80,7 @@ void loop() {
               interval = periodes[playedNote];
             }*/
             playedNote = data[0];
-            interval = periodes[playedNote%12]>>(playedNote/12);
+            interval = 32396.317023285 * pow(2.0, (- ((float)playedNote)/12.0));
           }
           dataNumber = 0;
         }
