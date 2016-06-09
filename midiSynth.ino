@@ -80,7 +80,7 @@ void loop() {
               interval = periodes[playedNote];
             }*/
             playedNote = data[0];
-            interval = 32396.317023285 * pow(2.0, (- ((float)playedNote)/12.0));
+            interval = 64792.6340465701 * pow(2.0, (- ((float)playedNote)/12.0));
           }
           dataNumber = 0;
         }
