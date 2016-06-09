@@ -27,7 +27,8 @@ unsigned char dataNumber = 0;
 char data[2];
 
 void setup() {
-  pinMode(outPin, OUTPUT);
+  //HIZ
+  pinMode(outPin, INPUT);
   dataNumber = 0;
   //set MIDI baud rate
   Serial.begin(31250);
@@ -55,6 +56,7 @@ void loop() {
         if((midiStatus & 0b11110000) == 0b10000000){
           //if note off correspond to note acually played, stop
           if(playedNote == data[0]){
+            pinMode(outPin, INPUT);//HIZ
             interval = 0;
             playedNote = -1;
           }
@@ -67,6 +69,7 @@ void loop() {
           if (data[1] ==  0){
             //if note off correspond to note acually played, stop
             if(playedNote == data[0]){
+              pinMode(outPin, INPUT);//HIZ
               interval = 0;
               playedNote = -1;
             }            
@@ -79,6 +82,7 @@ void loop() {
               playedNote =  data[0];
               interval = periodes[playedNote];
             }*/
+            pinMode(outPin, OUTPUT);//LOZ
             playedNote = data[0];
             interval = 64792.6340465701 * pow(2.0, (- ((float)playedNote)/12.0));
           }
