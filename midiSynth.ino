@@ -114,8 +114,8 @@ void loop() {
               interval = periodes[playedNote];
             }*/
             playedNote = data[0];
-            interval = 65536.0 * pow(2.0, (- ((float)playedNote)/12.0));
-            ICR1 = interval; //set frequency
+            interval = 64792.6340465701 * pow(2.0, (- ((float)playedNote)/12.0));
+            ICR1 = (interval-1); //set frequency
             OCR1A = ICR1/16;//duty cycle for PINB1
             TCNT1 = 0;//reset timer 
             DDRB |= (1<<1);//PINB1 as output, pin 9 on UNO
