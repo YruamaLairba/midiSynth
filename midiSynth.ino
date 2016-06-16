@@ -1,7 +1,7 @@
 /*
 
  */
-#include <math.h>
+#include <math.h> //for pow function
 
 //save last ouput toggle
 unsigned long previousMicros = 0;
@@ -27,8 +27,39 @@ unsigned char dataNumber = 0;
 char data[2];
 
 void setup() {
-  //HIZ
-  pinMode(outPin, INPUT);
+  /*** configuration of timer 1  ***/
+  
+  /* ---TCCR1A---
+  7: COM1A1
+  6: COM1A0
+  5: COM1B1
+  4: COM1B0
+  3: - read only, always use 0
+  2: - read only, always use 0
+  1: WGM11 Waveform Generation Mode
+  0: WGM10 Waveform Generation Mode
+  */       //76543210
+  TCCR1A = 0b11100010;
+  
+  /* ---TCCR1B---
+  7: ICNC1: Input Capture Noise Canceler (0 = disable)
+  6: ICES1: Input Capture Edge Select (0 = Falling)
+  5: - read only,always zero
+  4: WGM13 Waveform Generation Mode
+  3: WGM12 Waveform Generation Mode
+  2: CS12 clock select bit
+  1: CS11 clock select bit
+  0: CS10 clock select bit
+  */       //76543210
+  TCCR1B = 0b00011010;
+  
+  DDRB &= ~(1<<1);//set PINB1 as input (HIZ), pin 9 on UNO
+  DDRB &= ~(1<<2);//set PINB2 as input (HIZ), pin 10 on UNO
+  ICR1= 0xFFFF;//control frequency in current WGM mode
+  OCR1A = ICR1/2;//duty cycle for PINB1
+  OCR1B = ICR1/2;//duty cycle for PINB2
+  
+
   dataNumber = 0;
   //set MIDI baud rate
   Serial.begin(31250);
@@ -37,7 +68,7 @@ void setup() {
 void loop() {
   if(Serial.available()){
     char inByte = Serial.read();
-    //if we get a status byte, chnage the midi status and reset 
+    //if we get a status byte, change the midi status and reset 
     //Number of data bytes.
     if(inByte & 0b10000000){
       midiStatus = inByte;
@@ -56,7 +87,7 @@ void loop() {
         if((midiStatus & 0b11110000) == 0b10000000){
           //if note off correspond to note acually played, stop
           if(playedNote == data[0]){
-            pinMode(outPin, INPUT);//HIZ
+            DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
             interval = 0;
             playedNote = -1;
           }
@@ -69,7 +100,7 @@ void loop() {
           if (data[1] ==  0){
             //if note off correspond to note acually played, stop
             if(playedNote == data[0]){
-              pinMode(outPin, INPUT);//HIZ
+              DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
               interval = 0;
               playedNote = -1;
             }            
@@ -82,29 +113,19 @@ void loop() {
               playedNote =  data[0];
               interval = periodes[playedNote];
             }*/
-            pinMode(outPin, OUTPUT);//LOZ
             playedNote = data[0];
-            interval = 64792.6340465701 * pow(2.0, (- ((float)playedNote)/12.0));
+            interval = 65536.0 * pow(2.0, (- ((float)playedNote)/12.0));
+            ICR1 = interval; //set frequency
+            OCR1A = ICR1/16;//duty cycle for PINB1
+            TCNT1 = 0;//reset timer 
+            DDRB |= (1<<1);//PINB1 as output, pin 9 on UNO
           }
           dataNumber = 0;
         }
       }  
     }   
   }
-  unsigned long currentMicros = micros();
-  if ((currentMicros - previousMicros >= (interval)) && (interval!=0)) {
-    //save last time we toggle
-    previousMicros = currentMicros;
-    
-    //toggle the outState
-    if (outState == LOW) {
-      outState = HIGH;
-    }
-    else {
-      outState = LOW;
-    }  
-  }
-  //write the outState
-  digitalWrite(outPin, outState); 
+  /*
+  */
 }
 
