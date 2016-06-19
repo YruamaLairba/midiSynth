@@ -3,11 +3,8 @@
  */
 #include <math.h> //for pow function
 
-//save last ouput toggle
-unsigned long previousMicros = 0;
-
 //interval between toggle, nul interval is used when no note played
-int interval = 0 ;
+unsigned int interval = 0 ;
 
 //last played note, negative is invalid
 char playedNote = -1;
@@ -17,6 +14,9 @@ int outState = LOW; // status of output
 
 //status
 char midiStatus = 0;
+
+//timbre. we will cahnge duty cycle
+unsigned char timbre=127;
 
 //Number of data bytes received since last received status
 //or since last complete message.
@@ -116,9 +116,20 @@ void loop() {
             playedNote = data[0];
             interval = 64792.6340465701 * pow(2.0, (- ((float)playedNote)/12.0));
             ICR1 = (interval-1); //set frequency
-            OCR1A = ICR1/16;//duty cycle for PINB1
+            /* set duty cycle. the cast are to avoid overflow */
+            OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
             TCNT1 = 0;//reset timer 
             DDRB |= (1<<1);//PINB1 as output, pin 9 on UNO
+          }
+          dataNumber = 0;
+        }
+        //when we have a control change message
+        else if ((midiStatus & 0b11110000) == 0b10110000){
+          //when we the control change corresponde to "timbre"
+          if (data[0] == 0x47){
+            timbre=data[1];
+            /* set duty cycle. the cast are to avoid overflow */
+            OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
           }
           dataNumber = 0;
         }
