@@ -22,7 +22,7 @@ unsigned char timbre=127;
 int pitchBend = 0;
 //scale for pitch bend
 //float pitchBendScale = 0.000244140625 ;
-float pitchBendScale = 2.0/8191.0  ;
+float pitchBendScale = 12.0/8191.0  ;
 
 
 //Number of data bytes received since last received status
@@ -164,6 +164,7 @@ void loop() {
           float pitch = (float)playedNote + ((float)pitchBend*pitchBendScale);
           interval = 64792.6340465701 * pow(2.0, (- pitch/12.0));
           ICR1 = (interval-1); //set frequency
+          OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
         }
       }
     }
