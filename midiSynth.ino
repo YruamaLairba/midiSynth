@@ -21,7 +21,9 @@ unsigned char timbre=127;
 //pitchBend. beetween -8192 and 8191
 int pitchBend = 0;
 //scale for pitch bend
-float pitchBendScale = 0.000244140625 ;
+//float pitchBendScale = 0.000244140625 ;
+float pitchBendScale = 2.0/8191.0  ;
+
 
 //Number of data bytes received since last received status
 //or since last complete message.
@@ -108,11 +110,11 @@ void loop() {
               DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
               interval = 0;
               playedNote = -1;
-            }            
+            }
           }
           //normal note on message
           else{
-            /* 
+            /*
             //play only defined note, ignore other
             if (data[0] < periodesSize){
               playedNote =  data[0];
@@ -130,12 +132,24 @@ void loop() {
           }
           dataNumber = 0;
         }
-        //when we have a control change message
+        //when we have a control change message and Channel Mode Messages
         else if ((midiStatus & 0b11110000) == 0b10110000){
           //when we the control change corresponde to "timbre"
           if (data[0] == 0x47){
             timbre=data[1];
             /* set duty cycle. the cast are to avoid overflow */
+            OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
+          }
+          //All Sound Off, all note off
+          else if ((data[0]==120 || (data[0]<=123 && data[0] >= 127)
+                    && data[1]==0)){
+            DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
+            interval = 0;
+            playedNote = -1;
+          }
+          //reset all controllers
+          else if (data[0]==121 && data[1]==0){
+            timbre=127;
             OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
           }
           dataNumber = 0;
@@ -151,8 +165,8 @@ void loop() {
           interval = 64792.6340465701 * pow(2.0, (- pitch/12.0));
           ICR1 = (interval-1); //set frequency
         }
-      }  
-    }   
+      }
+    }
   }
   /*
   */
