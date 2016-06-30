@@ -141,7 +141,7 @@ void loop() {
             OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
           }
           //All Sound Off, all note off
-          else if ((data[0]==120 || (data[0]<=123 || data[0] >= 127)
+          else if ((data[0]==120 || (data[0]>=123 && data[0] <= 127)
                     && data[1]==0)){
             DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
             interval = 0;
