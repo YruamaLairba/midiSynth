@@ -9,7 +9,6 @@ unsigned int interval = 0 ;
 //last played note, negative is invalid
 char playedNote = -1;
 
-const int outPin = 9; //pin used for speaker
 int outState = LOW; // status of output
 
 //status
@@ -46,7 +45,7 @@ void setup() {
   1: WGM11 Waveform Generation Mode
   0: WGM10 Waveform Generation Mode
   */       //76543210
-  TCCR1A = 0b11100010;
+  TCCR1A = 0b11100011;
   
   /* ---TCCR1B---
   7: ICNC1: Input Capture Noise Canceler (0 = disable)
@@ -60,11 +59,9 @@ void setup() {
   */       //76543210
   TCCR1B = 0b00011010;
   
-  DDRB &= ~(1<<1);//set PINB1 as input (HIZ), pin 9 on UNO
   DDRB &= ~(1<<2);//set PINB2 as input (HIZ), pin 10 on UNO
-  ICR1= 0xFFFF;//control frequency in current WGM mode
-  OCR1A = ICR1/2;//duty cycle for PINB1
-  OCR1B = ICR1/2;//duty cycle for PINB2
+  OCR1A = 0xFFFF;//control frequency in current WGM mode
+  OCR1B = OCR1A/2;//duty cycle for PINB2
   
 
   dataNumber = 0;
@@ -94,7 +91,7 @@ void loop() {
         if((midiStatus & 0b11110000) == 0b10000000){
           //if note off correspond to note acually played, stop
           if(playedNote == data[0]){
-            DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
+            DDRB &= ~(1<<2);//PINB2 as input (HIZ), pin 10 on UNO
             interval = 0;
             playedNote = -1;
           }
@@ -107,7 +104,7 @@ void loop() {
           if (data[1] ==  0){
             //if note off correspond to note acually played, stop
             if(playedNote == data[0]){
-              DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
+              DDRB &= ~(1<<2);//PINB2 as input (HIZ), pin 10 on UNO
               interval = 0;
               playedNote = -1;
             }
@@ -124,11 +121,10 @@ void loop() {
             //pitch after applying pitchBend
             float pitch = (float)playedNote + ((float)pitchBend*pitchBendScale);
             interval = 64792.6340465701 * pow(2.0, (- pitch/12.0));
-            ICR1 = (interval-1); //set frequency
+            OCR1A = (interval-1); //set frequency
             /* set duty cycle. the cast are to avoid overflow */
-            OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
-            TCNT1 = 0;//reset timer 
-            DDRB |= (1<<1);//PINB1 as output, pin 9 on UNO
+            OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
+            DDRB |= (1<<2);//PINB2 as output, pin 10 on UNO
           }
           dataNumber = 0;
         }
@@ -138,19 +134,19 @@ void loop() {
           if (data[0] == 0x47){
             timbre=data[1];
             /* set duty cycle. the cast are to avoid overflow */
-            OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
+            OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
           }
           //All Sound Off, all note off
           else if ((data[0]==120 || (data[0]>=123 && data[0] <= 127)
                     && data[1]==0)){
-            DDRB &= ~(1<<1);//PINB1 as input (HIZ), pin 9 on UNO
+            DDRB &= ~(1<<2);//PINB2 as input (HIZ), pin 10 on UNO
             interval = 0;
             playedNote = -1;
           }
           //reset all controllers
           else if (data[0]==121 && data[1]==0){
             timbre=127;
-            OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
+            OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
           }
           dataNumber = 0;
         }
@@ -163,8 +159,8 @@ void loop() {
           pitchBend = ((data[1]<<7) | (data[0]<<0))-8192;
           float pitch = (float)playedNote + ((float)pitchBend*pitchBendScale);
           interval = 64792.6340465701 * pow(2.0, (- pitch/12.0));
-          ICR1 = (interval-1); //set frequency
-          OCR1A = ((unsigned long)interval*(unsigned long)timbre)/256;
+          OCR1A = (interval-1); //set frequency
+          OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
         }
       }
     }
