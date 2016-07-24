@@ -48,7 +48,7 @@ void setup() {
   1: WGM11 Waveform Generation Mode
   0: WGM10 Waveform Generation Mode
   */       //76543210
-  TCCR1A = 0b11100011;
+  TCCR1A = 0b00000011;
   
   /* ---TCCR1B---
   7: ICNC1: Input Capture Noise Canceler (0 = disable)
@@ -62,7 +62,8 @@ void setup() {
   */       //76543210
   TCCR1B = 0b00011010;
   
-  DDRB &= ~(1<<2);//set PINB2 as input (HIZ), pin 10 on UNO
+  PORTC &= ~(1<<2);//set PB2 as LOW, pin 10 on UNO
+  DDRB |= 1<<2;//set PB2 as input (HIZ), pin 10 on UNO
   OCR1A = 0xFFFF;//control frequency in current WGM mode
   OCR1B = OCR1A/2;//duty cycle for PINB2
   
@@ -94,7 +95,7 @@ void loop() {
         if((midiStatus & 0b11110000) == 0b10000000){
           //if note off correspond to note acually played, stop
           if(playedNote == data[0]){
-            DDRB &= ~(1<<2);//PINB2 as input (HIZ), pin 10 on UNO
+            TCCR1A &= 0b11001111;//Set PB2 i normal operation
             interval = 0;
             playedNote = -1;
           }
@@ -107,7 +108,7 @@ void loop() {
           if (data[1] ==  0){
             //if note off correspond to note acually played, stop
             if(playedNote == data[0]){
-              DDRB &= ~(1<<2);//PINB2 as input (HIZ), pin 10 on UNO
+              TCCR1A &= 0b11001111;//Set PB2 i normal operation 
               interval = 0;
               playedNote = -1;
             }
@@ -127,7 +128,9 @@ void loop() {
             OCR1A = (interval-1); //set frequency
             /* set duty cycle. the cast are to avoid overflow */
             OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
-            DDRB |= (1<<2);//PINB2 as output, pin 10 on UNO
+            /* PB2 as PWM output */
+            TCCR1A &= ~(1<<4);//COM1B0 = 0
+            TCCR1A |= 1<<5;//COM1B1 = 1
           }
           dataNumber = 0;
         }
@@ -142,7 +145,7 @@ void loop() {
           //All Sound Off, all note off
           else if ((data[0]==120 || (data[0]>=123 && data[0] <= 127)
                     && data[1]==0)){
-            DDRB &= ~(1<<2);//PINB2 as input (HIZ), pin 10 on UNO
+            TCCR1A &= 0b11001111;//Set PB2 i normal operation
             interval = 0;
             playedNote = -1;
           }
