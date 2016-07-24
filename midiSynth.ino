@@ -3,6 +3,9 @@
  */
 #include <math.h> //for pow function
 
+//periodes in micro seconde of note 0
+const float P_REF = 61156.1029275428;
+
 //interval between toggle, nul interval is used when no note played
 unsigned int interval = 0 ;
 
@@ -120,7 +123,7 @@ void loop() {
             playedNote = data[0];
             //pitch after applying pitchBend
             float pitch = (float)playedNote + ((float)pitchBend*pitchBendScale);
-            interval = 64792.6340465701 * pow(2.0, (- pitch/12.0));
+            interval = P_REF * pow(2.0, (- pitch/12.0));
             OCR1A = (interval-1); //set frequency
             /* set duty cycle. the cast are to avoid overflow */
             OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
@@ -158,7 +161,7 @@ void loop() {
           */
           pitchBend = ((data[1]<<7) | (data[0]<<0))-8192;
           float pitch = (float)playedNote + ((float)pitchBend*pitchBendScale);
-          interval = 64792.6340465701 * pow(2.0, (- pitch/12.0));
+          interval = P_REF * pow(2.0, (- pitch/12.0));
           OCR1A = (interval-1); //set frequency
           OCR1B = ((unsigned long)interval*(unsigned long)timbre)/256;
         }
